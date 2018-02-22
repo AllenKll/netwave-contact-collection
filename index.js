@@ -4,12 +4,12 @@ const app = express();
 const bodyParser = require('body-parser');
 
 app.post('/syllabus', (req, res) => {
-  if (body in req && req.body !== null)
+  if ('body' in req && req.body !== null)
   {
     res.end(JSON.stringify(req.body, null, 2));
   }
   else{
-    if (req in body){
+    if ('body' in req){
       res.send("body in request\r\n");
       res.send(req.body);
       res.send("\r\n");
