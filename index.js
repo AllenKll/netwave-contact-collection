@@ -9,7 +9,12 @@ app.post('/syllabus', (req, res) => {
     res.end(JSON.stringify(req.body, null, 2));
   }
   else{
-    res.status(400).end();
+    if (req in body){
+      res.send("body in request\r\n");
+      res.send(req.body);
+      res.send("\r\n");
+    }
+    res.status(200).end();
   }  
 });
 
