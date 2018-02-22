@@ -1,8 +1,6 @@
-
 {
   "name": "Netwave contact collector",
   "description": "Collects interested party info, and sends them a information packet",
-  "repository": "https://github.com/AllenKll/netwave-contact-collection",
   "image": "heroku/nodejs",
   "buildpacks": [
     {
@@ -11,5 +9,20 @@
     {
       "url": "heroku/nodejs"
     }
-  ]
+  ],
+  "version": "0.1.0",
+  "engines": {
+    "node": "8.9.1"
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AllenKll/netwave-contact-collection"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "CLOSED"
 }
