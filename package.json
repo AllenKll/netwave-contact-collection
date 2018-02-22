@@ -1,5 +1,5 @@
 {
-  "name": "Netwave contact collector",
+  "name": "Netwave-contact-collector",
   "description": "Collects interested party info, and sends them a information packet",
   "image": "heroku/nodejs",
   "buildpacks": [
