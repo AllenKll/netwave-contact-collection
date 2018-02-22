@@ -1,0 +1,7 @@
+
+{
+  "name": "Netwave contact collector",
+  "description": "Collects interested party info, and sends them a information packet",
+  "repository": "https://github.com/AllenKll/netwave-contact-collection,
+  "image": "heroku/nodejs"
+}
