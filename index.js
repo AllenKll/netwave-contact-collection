@@ -24,6 +24,9 @@ app.post('/syllabus', (req, res) => {
   }  
   
   res.send(buffer);
+})
+.get('*', (req, res) => {
+	res.status(404).end();
 });
 
 app.use(bodyParser.json());
