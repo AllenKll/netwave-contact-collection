@@ -23,12 +23,6 @@ var SMTP_USER = process.env.SENDGRID_SMTP_USERNAME;
 var SMTP_PASS = process.env.SENDGRID_SMTP_PASSWORD;
 var ATTACHMENT = process.env.ATTACHMENT_URL;
 
-// TODO temp for testing
-SMTP_USER = "apikey";
-SMTP_PASS = "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";
-ATTACHMENT = 'http://kennedystuff.com/images/sooncome.jpg';
-collectionAddress =  "allenkll@gmail.com"
-
 var requiredFields = [
 		"name",
 		"phone",
