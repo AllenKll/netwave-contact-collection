@@ -7,8 +7,8 @@ const mustache = require('mustache');
 const fs = require('fs');
 
 // these must exist in the environment
-if ( !('SMTP_PASS' in process.env) ||
-     !('SMTP_USER' in process.env) ||
+if ( !('SENDGRID_SMTP_PASSWORD' in process.env) ||
+     !('SENDGRID_SMTP_USERNAME' in process.env) ||
      !('ATTACHMENT_URL' in process.env) )
 {
   console.log("Missing SMTP user/pass or attachment URL.")
