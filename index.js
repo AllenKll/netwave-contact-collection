@@ -2,13 +2,69 @@ const PORT = process.env.PORT || 5000;
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const nodemailer = require('nodemailer');
+const Mustache = require('Mustache');
+const fs = require('fs');
+const SMTP_SERVER = process.env.SENDGRID_SMTP_SERVER || "smtp.sendgrid.net";
+const SMTP_PORT = process.env.SENDGRID_SMTP_PORT || 25;
+const SMTP_USER = "apikey";
+const SMTP_PASS = "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";
+
+// TODO:
+// add URL for Syllabus
+
+//const collectionAddress = process.env.COLLECTION_ADDRESS || "ultimatefibertech@gmail.com"
+const collectionAddress = process.env.COLLECTION_ADDRESS || "allenkll@gmail.com"
 
 var requiredFields = [
 		"name",
 		"phone",
-		"interest"
+		"interest",
+		"email"
 ];
 
+//*******************************
+// EMAIL CONFIGURATION AND SETUP
+//*******************************
+let smtpConfig = {
+    host: SMTP_SERVER,
+    port: SMTP_PORT,
+    secure: false, // upgrade later with STARTTLS
+    auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS
+    }
+};
+
+let transporter = nodemailer.createTransport(smtpConfig);
+
+// setup email data
+let requesterEmail = {
+	from: '"No Reply" <noreplya@netwaveervicescom>',
+	// to: -- filled in at processing time
+  subject: 'The information you requested from Netwave', 
+  text: 'Hello world?', 
+	html: '<b>Hello world?</b>',
+  attachments: [
+    {   // use URL as an attachment
+        path: 'https://raw.github.com/nodemailer/nodemailer/master/LICENSE'
+    }
+  ]
+
+};
+
+
+let netwaveEmail = {
+	from: '"No Reply" <noreplya@netwaveervicescom>',
+    to: collectionAddress,
+    subject: 'A website visitor requested information' 
+    // text: -- filled in at processing time
+};
+
+
+//***************************
+// SET UP APP AND HANDLERS
+//***************************
 app.use(bodyParser.json());
 
 app.post('/syllabus', (req, res) => {
@@ -22,7 +78,27 @@ app.post('/syllabus', (req, res) => {
 			return;
 		}
 	}
-    //buffer += JSON.stringify(req.body, null, 2);
+
+	// send mail to netwave
+	netwaveEmail.text = JSON.stringify(req.body, null, 2);
+	transporter.sendMail(netwaveEmail, (error, info) => {
+   	if (error) {
+        return console.log(error);
+   	}
+   	console.log('Message sent: %s', info.messageId);
+	});
+
+	// send mail to requester
+  requesterEmail.to = req.body.email;
+  transporter.sendMail(requesterEmail, (error, info) => {
+    if (error) {
+      return console.log(error);
+    }
+    console.log('Message sent: %s', info.messageId);
+  });
+
+
+
   } else {
     if ('body' in req){
       buffer += "null body\r\n";
@@ -39,4 +115,16 @@ app.get('*', (req, res) => {
 	res.status(404).end();
 });
 
-app.listen(PORT, () => console.log(`Listening on port ${ PORT }!`));
+//*************
+// START APP
+//*************
+// verify email connection configuration
+transporter.verify(function(error, success) {
+   if (error) {
+        console.log(error);
+   } else {
+        console.log('Server is ready to take our messages');
+        app.listen(PORT, () => console.log(`Listening on port ${ PORT }!`));
+   }
+});
+
