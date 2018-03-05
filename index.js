@@ -3,18 +3,31 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const nodemailer = require('nodemailer');
-const Mustache = require('Mustache');
+const mustache = require('mustache');
 const fs = require('fs');
-const SMTP_SERVER = process.env.SENDGRID_SMTP_SERVER || "smtp.sendgrid.net";
-const SMTP_PORT = process.env.SENDGRID_SMTP_PORT || 25;
-const SMTP_USER = "apikey";
-const SMTP_PASS = "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";
 
-// TODO:
-// add URL for Syllabus
+// these must exist in the environment
+if ( !('SMTP_PASS' in process.env) ||
+     !('SMTP_USER' in process.env) ||
+     !('ATTACHMENT_URL' in process.env) )
+{
+  console.log("Missing SMTP user/pass or attachment URL.")
+  console.log("Application refusing to start.")
+  return -1;
+}
 
-//const collectionAddress = process.env.COLLECTION_ADDRESS || "ultimatefibertech@gmail.com"
-const collectionAddress = process.env.COLLECTION_ADDRESS || "allenkll@gmail.com"
+var SMTP_SERVER = process.env.SENDGRID_SMTP_SERVER || "smtp.sendgrid.net";
+var SMTP_PORT = process.env.SENDGRID_SMTP_PORT || 25;
+var collectionAddress = process.env.COLLECTION_ADDRESS || "ultimatefibertech@gmail.com"
+var SMTP_USER = process.env.SENDGRID_SMTP_USERNAME;
+var SMTP_PASS = process.env.SENDGRID_SMTP_PASSWORD;
+var ATTACHMENT = process.env.ATTACHMENT_URL;
+
+// TODO temp for testing
+SMTP_USER = "apikey";
+SMTP_PASS = "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";
+ATTACHMENT = 'http://kennedystuff.com/images/sooncome.jpg';
+collectionAddress =  "allenkll@gmail.com"
 
 var requiredFields = [
 		"name",
@@ -22,6 +35,13 @@ var requiredFields = [
 		"interest",
 		"email"
 ];
+
+function loadFileToString(template) {
+    return fs.readFileSync( template ).toString();
+}
+var htmlTemplate = loadFileToString('requestor.html.tmpl');
+var textTemplate = loadFileToString('requestor.text.tmpl');
+
 
 //*******************************
 // EMAIL CONFIGURATION AND SETUP
@@ -40,22 +60,19 @@ let transporter = nodemailer.createTransport(smtpConfig);
 
 // setup email data
 let requesterEmail = {
-	from: '"No Reply" <noreplya@netwaveervicescom>',
+	from: '"No Reply - Netwave" <noreplya@netwaveervicescom>',
 	// to: -- filled in at processing time
   subject: 'The information you requested from Netwave', 
-  text: 'Hello world?', 
-	html: '<b>Hello world?</b>',
+  // text: -- filled from template  
+	// html: -- filled from template 
   attachments: [
     {   // use URL as an attachment
-        path: 'https://raw.github.com/nodemailer/nodemailer/master/LICENSE'
+        path: ATTACHMENT
     }
   ]
-
 };
-
-
 let netwaveEmail = {
-	from: '"No Reply" <noreplya@netwaveervicescom>',
+	from: '"No Reply - Netwave" <noreplya@netwaveervicescom>',
     to: collectionAddress,
     subject: 'A website visitor requested information' 
     // text: -- filled in at processing time
@@ -69,36 +86,37 @@ app.use(bodyParser.json());
 
 app.post('/syllabus', (req, res) => {
   var buffer = "";
+  // if a json body was properly parsed
   if ('body' in req && req.body !== null) {
     // check for required fields
-	for (var i=0; i<requiredFields.length; ++i ){
-		if (!(requiredFields[i] in req.body)) {
-			res.status(400);
-			res.send("Missing required parameters");
-			return;
-		}
-	}
+  	for (var i=0; i<requiredFields.length; ++i ){
+  		if (!(requiredFields[i] in req.body)) {
+  			res.status(400);
+  			res.send("Missing required parameters");
+  			return;
+  		}
+  	}
 
-	// send mail to netwave
-	netwaveEmail.text = JSON.stringify(req.body, null, 2);
-	transporter.sendMail(netwaveEmail, (error, info) => {
-   	if (error) {
+  	// send mail to netwave
+  	netwaveEmail.text = JSON.stringify(req.body, null, 2);
+  	transporter.sendMail(netwaveEmail, (error, info) => {
+     	if (error) {
+          return console.log(error);
+     	}
+     	console.log('Message sent: %s', info.messageId);
+  	});
+
+  	// send mail to requester
+    requesterEmail.to = req.body.email;
+    // fill in body templates
+    requesterEmail.html = mustache.render(htmlTemplate, req.body);
+    requesterEmail.text = mustache.render(textTemplate, req.body);
+    transporter.sendMail(requesterEmail, (error, info) => {
+      if (error) {
         return console.log(error);
-   	}
-   	console.log('Message sent: %s', info.messageId);
-	});
-
-	// send mail to requester
-  requesterEmail.to = req.body.email;
-  transporter.sendMail(requesterEmail, (error, info) => {
-    if (error) {
-      return console.log(error);
-    }
-    console.log('Message sent: %s', info.messageId);
-  });
-
-
-
+      }
+      console.log('Message sent: %s', info.messageId);
+    });
   } else {
     if ('body' in req){
       buffer += "null body\r\n";
